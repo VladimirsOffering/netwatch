@@ -1,0 +1,387 @@
+﻿<Window x:Class="NetWatch.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="NetWatch — монитор сетевой активности"
+        Height="700" Width="1080"
+        MinHeight="460" MinWidth="860"
+        WindowStartupLocation="CenterScreen"
+        Background="#FFF1F5F9"
+        FontFamily="Segoe UI"
+        Closing="Window_Closing">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="CardBorder" Color="#FFE2E8F0" />
+        <SolidColorBrush x:Key="Muted" Color="#FF64748B" />
+
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="16,7" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="StartButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Background" Value="#FF16A34A" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FF15803D" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#FF166534" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="StopButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Background" Value="#FFDC2626" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FFB91C1C" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#FF7F1D1D" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="PauseButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Background" Value="#FFD97706" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FFB45309" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#FF92400E" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ResetButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Background" Value="#FF475569" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FF334155" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#FF1E293B" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="NumericCell" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="Margin" Value="0,0,12,0" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="White" CornerRadius="10" Padding="12"
+                BorderBrush="{StaticResource CardBorder}" BorderThickness="1" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="▶  Старт" Style="{StaticResource StartButton}"
+                            Command="{Binding StartCommand}" Margin="0,0,6,0" />
+                    <Button Content="■  Стоп" Style="{StaticResource StopButton}"
+                            Command="{Binding StopCommand}" Margin="0,0,6,0" />
+                    <Button Content="{Binding PauseButtonText}" Style="{StaticResource PauseButton}"
+                            Command="{Binding PauseCommand}" Margin="0,0,6,0" />
+                    <Button Content="↺  Сброс" Style="{StaticResource ResetButton}"
+                            Command="{Binding ResetCommand}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="Поиск" Foreground="{StaticResource Muted}"
+                               VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <Border Background="#FFF8FAFC" BorderBrush="{StaticResource CardBorder}"
+                            BorderThickness="1" CornerRadius="8" Padding="10,0" Height="32">
+                        <TextBox Width="240" BorderThickness="0" Background="Transparent"
+                                 VerticalContentAlignment="Center"
+                                 Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="Фильтр по программе, домену или IP" />
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" Background="White" CornerRadius="10" Padding="14,10"
+                BorderBrush="{StaticResource CardBorder}" BorderThickness="1" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Border CornerRadius="20" Padding="10,4">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFF1F5F9" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsCollecting}" Value="True">
+                                    <Setter Property="Background" Value="#FFDCFCE7" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                    <Setter Property="Background" Value="#FFFEF3C7" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,7,0">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="#FF94A3B8" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsCollecting}" Value="True">
+                                            <Setter Property="Fill" Value="#FF16A34A" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                            <Setter Property="Fill" Value="#FFD97706" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock Text="{Binding StateText}" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#FF0F172A" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Margin="18,0,0,0" VerticalAlignment="Center" FontSize="14">
+                    <Run Text="↓ " Foreground="#FF16803C" />
+                    <Run Text="{Binding TotalInText, Mode=OneWay}" />
+                </TextBlock>
+                <TextBlock Margin="18,0,0,0" VerticalAlignment="Center" FontSize="14">
+                    <Run Text="↑ " Foreground="#FFB45309" />
+                    <Run Text="{Binding TotalOutText, Mode=OneWay}" />
+                </TextBlock>
+                <TextBlock Margin="22,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource Muted}">
+                    <Run Text="Программ: " />
+                    <Run Text="{Binding ProcessCount, Mode=OneWay}" Foreground="#FF0F172A" />
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2" Background="White" CornerRadius="10"
+                BorderBrush="{StaticResource CardBorder}" BorderThickness="1" ClipToBounds="True">
+            <DataGrid ItemsSource="{Binding View}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserResizeRows="False"
+                      CanUserReorderColumns="False"
+                      SelectionMode="Extended"
+                      SelectionUnit="FullRow"
+                      EnableRowVirtualization="True"
+                      EnableColumnVirtualization="True"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#FFEEF2F7"
+                      Background="Transparent"
+                      RowBackground="White"
+                      BorderThickness="0"
+                      RowHeight="23"
+                      FontSize="13">
+
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Background" Value="White" />
+                        <Setter Property="ContextMenu">
+                            <Setter.Value>
+                                <ContextMenu>
+                                    <MenuItem Header="Перейти к расположению"
+                                              Command="{Binding PlacementTarget.DataContext.OpenLocationCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                </ContextMenu>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FFF8FAFC" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#FFDBEAFE" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                <Setter Property="Background" Value="#FFDCFCE7" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Foreground" Value="#FF0F172A" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.CellStyle>
+
+                <DataGrid.Resources>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#FFF8FAFC" />
+                        <Setter Property="Foreground" Value="#FF475569" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                        <Setter Property="FontSize" Value="12" />
+                        <Setter Property="Padding" Value="10,8" />
+                        <Setter Property="BorderBrush" Value="{StaticResource CardBorder}" />
+                        <Setter Property="BorderThickness" Value="0,0,0,1" />
+                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="DataGridColumnHeader">
+                                    <Grid>
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                Padding="{TemplateBinding Padding}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                  VerticalAlignment="Center"
+                                                                  RecognizesAccessKey="True" />
+                                                <Path x:Name="SortArrow"
+                                                      Grid.Column="1"
+                                                      Data="M 0,0 L 8,0 L 4,5 Z"
+                                                      Fill="#FF64748B"
+                                                      Margin="7,0,0,0"
+                                                      VerticalAlignment="Center"
+                                                      Visibility="Collapsed"
+                                                      RenderTransformOrigin="0.5,0.5">
+                                                    <Path.RenderTransform>
+                                                        <RotateTransform Angle="0" />
+                                                    </Path.RenderTransform>
+                                                </Path>
+                                            </Grid>
+                                        </Border>
+                                        <Thumb x:Name="PART_LeftHeaderGripper" HorizontalAlignment="Left"
+                                               Width="8" Cursor="SizeWE">
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="Thumb">
+                                                    <Border Background="Transparent" />
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                        <Thumb x:Name="PART_RightHeaderGripper" HorizontalAlignment="Right"
+                                               Width="8" Cursor="SizeWE">
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="Thumb">
+                                                    <Border Background="Transparent" />
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="SortDirection" Value="Ascending">
+                                            <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
+                                            <Setter TargetName="SortArrow" Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <RotateTransform Angle="180" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                        <Trigger Property="SortDirection" Value="Descending">
+                                            <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
+                                            <Setter TargetName="SortArrow" Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <RotateTransform Angle="0" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FFF1F5F9" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.Resources>
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Активность" Width="110"
+                                        SortDirection="Descending"
+                                        Binding="{Binding LastSeenText}"
+                                        SortMemberPath="LastSeenTicks" />
+                    <DataGridTextColumn Header="Программа" Width="230"
+                                        Binding="{Binding ProcessLabel}"
+                                        SortMemberPath="ProcessName">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                                <Setter Property="Margin" Value="0,0,10,0" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSystemProcess}" Value="True">
+                                        <Setter Property="Foreground" Value="#FF7C3AED" />
+                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                        <Setter Property="ToolTip" Value="Системный процесс" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Адрес (домен / IP)" Width="*"
+                                        Binding="{Binding AddressText}"
+                                        SortMemberPath="AddressText" />
+                    <DataGridTextColumn Header="IP" Width="150"
+                                        Binding="{Binding Ip}" />
+                    <DataGridTextColumn Header="↓ Входящий" Width="110"
+                                        Binding="{Binding InText}"
+                                        SortMemberPath="InBytes"
+                                        ElementStyle="{StaticResource NumericCell}" />
+                    <DataGridTextColumn Header="↑ Исходящий" Width="110"
+                                        Binding="{Binding OutText}"
+                                        SortMemberPath="OutBytes"
+                                        ElementStyle="{StaticResource NumericCell}" />
+                    <DataGridTextColumn Header="Всего" Width="100"
+                                        Binding="{Binding TotalText}"
+                                        SortMemberPath="TotalBytes"
+                                        ElementStyle="{StaticResource NumericCell}" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <TextBlock Grid.Row="3" Margin="4,10,0,0"
+                   Text="{Binding Status}"
+                   Foreground="{StaticResource Muted}"
+                   TextWrapping="Wrap" />
+    </Grid>
+</Window>
